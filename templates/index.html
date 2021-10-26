@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{{name}}</title>
+        
+        <!-- jQuery -->
+        <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+        
+        <!-- Popper -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+        
+        <!-- Bootstrap CSS and JS -->
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+        
+        <!-- Leaflet -->
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A==" crossorigin=""/>
+         <!-- Make sure you put this AFTER Leaflet's CSS -->
+        <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" crossorigin=""></script>
+        
+        <!-- Custom -->
+        <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+        <script src="{{ url_for('static', filename='main.js') }}"></script>
+    </head>
+
+    <body>
+        <div class="container-fluid ">
+            <div class="row">
+                <!-- toolbar -->
+                <div class="col-12">
+                    <h1 class="text-right">
+                        {{name}}
+                    </h1>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <!-- map container -->
+                    <div id="mapid"></div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-12">
+                    <hr>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- links -->
+                <div class="col-4 d-flex align-items-stretch">
+                    <div class="card w-100">
+                        <div class="card-header">
+                            Useful links
+                        </div>
+                        <div class="card-body">
+                            {% for url,printable_name in links %}
+                                <div class="row form-group">
+                                    <div class="col-12">
+                                        <a href="{{url}}" class="btn btn-primary btn-block useful-link" target="_blank">{{printable_name}}</a>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <div class="card-footer text-muted">
+                            <button disabled id="usefulLinksModalButton" type="button" disabled class="btn btn-primary" data-toggle="modal" data-target="#usefulLinksModal">Show JSON output</button>
+                        </div>
+                    </div>
+                </div>
+                <!-- collections -->
+                <div class="col-4  d-flex align-items-stretch">
+                        <div class="card  w-100">
+                            <div class="card-header">
+                                Get collection items by group ID and collection ID
+                            </div>
+                            <div class="card-body">
+                                <div class="row form-group">
+                                    <div class="col-12">
+                                        <label for="groupId">Group ID*</label>
+                                        <!-- <input type="text" name="collectionId" required id="collectionId" class="form-control" value="" placeholder="{{default_collection_id}}"> -->
+                                        <select name="groupId" required id="groupId" class="form-control">
+                                            <option value=""></option>
+                                            {%for group in groups %}
+                                                <option value="{{group.href}}">{{group.name}}</option>
+                                            {%endfor%}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-12">
+                                        <label for="collectionId">Group ID*</label>
+                                        <!-- <input type="text" name="collectionId" required id="collectionId" class="form-control" value="" placeholder="{{default_collection_id}}"> -->
+                                        <select name="collectionId" required id="collectionId" class="form-control">
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-12">
+                                        <label for="collectionId">N. of elements</label> <small>20 by default</small>
+                                        <input type="text" name="limit" id="limit" required class="form-control" value="20" placeholder="20">
+                                    </div>
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-12">
+                                        <label for="collectionBbox">Bbox</label>
+                                        <input ype="text" name="collectionBbox" id="collectionBbox" class="form-control" value="" placeholder="{{default_bbox}}">
+                                    </div>
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-6" id="queryablesContainer">
+                                        <label for="queryableName">Queryable</label>
+                                        <select name="queryableName" id="queryableName" class="form-control">
+                                        </select>
+                                    </div>
+                                    <div class="col-6">
+                                        <label for="queryableValue">Queryable value</label>
+                                        <input ype="text" name="queryableValue" id="queryableValue" class="form-control" value="" placeholder="">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-footer text-muted">
+                                <button id="getCollectionItems" class="btn btn-primary">Get items</button>
+                                <button id="collentionItemsJsonOutput" type="button" disabled class="btn btn-primary" data-toggle="modal" data-target="#getCollectionItemsModal">Show JSON output</button>
+                            </div>
+                        </div>
+                </div>
+                <!-- item -->
+                <div class="col-4  d-flex align-items-stretch">
+                    <div class="card  w-100">
+                        <div class="card-header">
+                            Get item by collection ID and item ID
+                        </div>
+                        <div class="card-body">
+                            <div class="row form-group">
+                                <div class="col-12">
+                                    <label for="collectionIdFilter">Feature collection ID*</label>
+                                    <select name="collectionIdFilter" required id="collectionIdFilter" class="form-control">
+                                        <option value=""></option>
+                                        {%for collection in collections %}
+                                            <option value="{{collection.id}}">{{collection.name}}</option>
+                                        {%endfor%}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row form-group">
+                                <div class="col-12">
+                                    <label for="elementId">Element ID*</label>
+                                    <!-- <input type="text" name="elementId" required id="elementId" class="form-control" value="" placeholder="{{default_element_id}}"> -->
+                                    <select name="elementId" required id="elementId" class="form-control"></select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer text-muted">
+                            <button id="getCollectionItem" class="btn btn-primary">Get item</button>
+                            <button  id="collentionItemJsonOutput" type="button" disabled class="btn btn-primary" data-toggle="modal" data-target="#getCollectionItemModal">Show JSON output</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- #usefulLinksModal -->
+        <div class="modal fade" id="usefulLinksModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg" role="document">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="exampleModalLabel">JSON output</h5>
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                  </button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-12">
+                            <pre id="result-link-items"></pre>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+              </div>
+            </div>
+        </div>
+
+        <!-- #getCollectionItemsModal -->
+        <div class="modal fade" id="getCollectionItemsModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg" role="document">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="exampleModalLabel">JSON output for <span id="selectedCollectionId"></span></h5>
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                  </button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-12">
+                            <pre id="result-items"></pre>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+              </div>
+            </div>
+        </div>
+
+        <!-- #getCollectionItemModal -->
+        <div class="modal fade" id="getCollectionItemModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg" role="document">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="exampleModalLabel">JSON output for <span id="selectedItemId"></span></h5>
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                  </button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-12">
+                            <pre id="result-item"></pre>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+              </div>
+            </div>
+        </div>
+
+        <footer>
+            <hr>
+            <p class="text-center">
+                2021
+            </p>
+        </footer>
+
+        <!-- Document root -->
+        <script>
+            $SCRIPT_ROOT = {{request.root_url|tojson|safe}};
+            $COLLECTIONS =  {{collections|tojson|safe}};
+            $GROUPS =  {{groups|tojson|safe}};
+            var map;
+        </script>
+
+        <!-- Colletion items JS -->
+        <script>
+            /**
+             * The lines ready to be rendered.
+             *
+             * @type {array}
+             */
+            var lines = [];
+            /**
+             * The polygons ready to be rendered.
+             *
+             * @type {array}
+             */
+            var polygons = [];
+            /**
+             * The points ready to be rendered.
+             *
+             * @type {array}
+             */
+            var points = [];
+            /**
+             * The LineStrings ready to be rendered.
+             * 
+             * @type {array}
+             */
+            var lineStrings = [];
+
+            $(function() {
+                // get collection list
+                $('button#getCollectionItems').bind('click', getCollectionItemsList);
+            });
+
+            /** @function getCollectionItemList 
+             * Do an AJAX call to get all the items that are part of a given collection.
+             *
+             * @returns {JSON}|{boolean}
+             */
+            function getCollectionItemsList(){
+                refreshMap();
+                // var collId = $('input[name="collectionId"]').val();
+                var collId = document.getElementById("collectionId").value;
+                if (collId.length == 0) {
+                    $('#collectionId').addClass('border-danger')
+                    $('#collectionId').on('change', function(){
+                        $(this).removeClass('border-danger')
+                    });
+                    return false;
+                }
+                var limit = $('input[name="limit"]').val();
+                var bboxVal = $('#collectionBbox').val();
+
+                var $this = $(this);
+                var loadingText = '<i class="fa fa-circle-o-notch fa-spin"></i> Loading...';
+                if ($(this).html() !== loadingText) {
+                    $this.data('original-text', $(this).html());
+                    $this.html(loadingText);
+                    $this.prop('disabled', true);
+
+                }
+                $.getJSON($SCRIPT_ROOT + '/collections/' +collId+ '/items/', {
+                    collectionId: collId,
+                    l: limit,
+                    bbox: bboxVal,
+                    queryableName: $('#queryableName').val(),
+                    queryableValue: $('input[name="queryableValue"]').val(),
+                }, function(data) {
+                    if (data[0] == "error") {
+                        alert(data[1]);
+                        $this.html($this.data('original-text'));
+                        $this.removeAttr('disabled');
+                    } else {
+                        /** @function showJSONOutput */
+                        showJSONOutput(data, "#result-items");
+                        /** @function saveObjects */
+                        saveObjects(data);
+                        /** @function renderObjects */
+                        renderObjects();
+                        return data;
+                    }
+                }).done(function (data) {
+                    if (data[0] !== "error") {
+                        $this.html($this.data('original-text'));
+                        $this.removeAttr('disabled');
+                        $('#collentionItemsJsonOutput').removeAttr('disabled');
+                    }
+                }).fail(function() {
+                    $this.html($this.data('original-text'));
+                    $this.removeAttr('disabled');
+                    alert('Error');
+                });
+
+                return false;
+            }
+
+            /** @function saveObjects 
+             * Pushes each received object into the needed array
+             * 
+             * @returns {void}
+             */
+            function saveObjects(data) {
+                data.forEach(element => {
+                    switch (element.geometry.type) {
+                        case "Polygon":
+                            var obj = {
+                                type: element.geometry.type,
+                                coordinates: element.geometry.coordinates,
+                                properties: element.properties,
+                                id: element.id,
+                            }
+                            polygons.push(obj);
+                            break;
+                        
+                        case "Point":
+                            var obj = {
+                                type: element.geometry.type,
+                                coordinates: element.geometry.coordinates,
+                                properties: element.properties,
+                                id: element.id,
+                            }
+                            points.push(obj);
+                            break;
+
+                        case "LineString":
+                            var obj = {
+                                type: element.geometry.type,
+                                coordinates: element.geometry.coordinates,
+                                properties: element.properties,
+                                id: element.id,
+                            }
+                            lineStrings.push(obj);
+                            break;
+                    
+                        default:
+                            break;
+                    }
+                });
+            }
+
+            /** @function showJSONOutput 
+             * Returns and puts the given JSON response into a modal window
+             * 
+             * @returns {void}
+             */
+            function showJSONOutput(data, target) {
+                // Put beautified json
+                // $(target).text(JSON.stringify(data, null, 4));
+                $("#selectedCollectionId").text(data.id)
+                $(target).empty().simpleJson({ jsonObject: data });
+            }
+
+            /** @function renderObjects 
+             * Renders each stored object into the map
+             * 
+             * @returns {void}
+             */
+            function renderObjects() {
+                // Render polygons
+                polygons.forEach(function(polygon) {
+                    // Add to map custom polygons
+                    var pol = L.polygon(polygon.coordinates, {
+                        weight: 1,
+                        fillOpacity: 0.7,
+                        color: 'red',
+                        dashArray: '3'
+                    }).addTo(map);
+                    // Add tooltip to the polygon
+                    var content = '<h4>'+polygon.id+' properties:</h4>';
+                    var counter = 0;
+                    for(var key in polygon.properties) {
+                        if(polygon.properties.hasOwnProperty(key) && counter < 5) {
+                            content += '<p>'+key+':'+polygon.properties[key]+'<p>';
+                            counter++;
+                        }
+                    }
+                    pol.bindTooltip(content).addTo(map);
+                    // Get the polygon center
+                    var center = pol.getCenter();
+                    // Fly to the polygon center
+                    map.flyTo([center.lat, center.lng], 9);
+                });
+                // Render points
+                points.forEach(function(point) {
+                    var pt = L.geoJSON(point, {
+                        pointToLayer: function (feature, latlng) {
+                            // Put the markeron map
+                            L.marker(latlng).addTo(map);
+                            // Show custom points
+                            return L.circleMarker(latlng, {
+                                radius: 8,
+                                fillColor: "#ff7800",
+                                color: "#000",
+                                weight: 1,
+                                opacity: 1,
+                                fillOpacity: 0.8
+                            });
+                        }
+                    }).addTo(map);
+                    // Add tooltip to the point
+                    var content = '<h4>'+point.id+' properties:</h4>';
+                    var counter = 0;
+                    console.log(point);
+                    for(var key in point.properties) {
+                        if(point.properties.hasOwnProperty(key) && counter < 5) {
+                            content += '<p>'+key+':'+point.properties[key]+'<p>';
+                            counter++;
+                        }
+                    }
+                    pt.bindTooltip(content).addTo(map);
+                    // Fly to the point center
+                    map.flyTo(pt.getBounds().getCenter(), 9);
+                });
+                // Render lineStrings
+                lineStrings.forEach(function(lineString) {
+                    // TODO: Why do we need to reverse the coordinates array?
+                    // Reverse the corrdinates 
+                    // (FIXME)
+                    var coordinates = [];
+                    lineString.coordinates.forEach(function(coordinatesPair) {
+                        var aux = [coordinatesPair[1], coordinatesPair[0]];
+                        coordinates.push(aux);
+                    });
+                    // (ENDFIXME)
+                    // Add to map custom lineStrings
+                    var ls = L.polyline(coordinates).addTo(map);
+                    // Add tooltip to the polygon
+                    var content = '<h4>'+lineString.id+' properties:</h4>';
+                    var counter = 0;
+                    for(var key in lineString.properties) {
+                        if(lineString.properties.hasOwnProperty(key) && counter < 5) {
+                            content += '<p>'+key+':'+lineString.properties[key]+'<p>';
+                            counter++;
+                        }
+                    }
+                    ls.bindTooltip(content).addTo(map);
+                    // Get the lineString center
+                    var center = ls.getCenter();
+                    // Fly to the lineString center
+                    map.flyTo([center.lat, center.lng], 3);
+                });
+            }
+        </script>
+
+        <!-- Colletion item JS -->
+        <script>
+            $(function() {
+                // get collection list
+                $('button#getCollectionItem').bind('click', getCollectionItem)
+                // get items of selected collection
+                $('select#collectionIdFilter').bind('change', getCollectionItemsListAndPopulateSelect);
+            });
+
+            /** @function getCollectionItemL
+             * Do an AJAX call to get the one item by Id that is part of a given collection.
+             *
+             * @returns {JSON}|{boolean}
+             */
+            function getCollectionItem(){
+                refreshMap();
+                var collId = $('#collectionIdFilter').val();
+                if (collId.length == 0) {
+                    $('#collectionIdFilter').addClass('border-danger')
+                    $('#collectionIdFilter').on('change', function(){
+                        $(this).removeClass('border-danger')
+                    });
+                    return false;
+                }
+                var itemId = $('#elementId').val();
+                if (itemId.length == 0) {
+                    $('#elementId').addClass('border-danger')
+                    $('#elementId').on('input', function(){
+                        $(this).removeClass('border-danger')
+                    });
+                    return false;
+                }
+                var bboxVal = $('#elementBbox').val();
+
+                var $this = $(this);
+                var loadingText = '<i class="fa fa-circle-o-notch fa-spin"></i> Loading...';
+                if ($(this).html() !== loadingText) {
+                    $this.data('original-text', $(this).html());
+                    $this.html(loadingText);
+                    $this.prop('disabled', true);
+
+                }
+                $.getJSON($SCRIPT_ROOT + '/collections/' +collId+ '/items/'+itemId, {
+                    collectionId: collId,
+                    itemId: itemId,
+                    bbox: bboxVal,
+                }, function(data) {
+                    if (data[0] == "error") {
+                        alert(data[1]);
+                    } else {
+                        /** @function showJSONOutput */
+                        showJSONOutput(data, "#result-item");
+                        /** @function saveObject */
+                        saveObject(data);
+                        /** @function renderObject */
+                        renderObject();
+                        return data;
+                    }
+                }).done(function (data) {
+                    if (data[0] !== "error") {
+                        $this.html($this.data('original-text'));
+                        $this.removeAttr('disabled');
+                        $('#collentionItemJsonOutput').removeAttr('disabled');
+                    }
+                }).fail(function() {
+                    $this.html($this.data('original-text'));
+                    $this.removeAttr('disabled');
+                    alert('Error');
+                });
+
+                return false;
+            }
+
+            /** @function saveObjects 
+             * Pushes a received object into the needed array
+             * 
+             * @returns {void}
+             */
+            function saveObject(element) {
+                console.log(element);
+                var data = element;
+                switch (data.geometry.type) {
+                        case "Polygon":
+                            var obj = {
+                                type: data.geometry.type,
+                                coordinates: data.geometry.coordinates,
+                                properties: data.properties,
+                                id: data.id,
+                            }
+                            polygons.push(obj);
+                            break;
+                        
+                        case "Point":
+                            var obj = {
+                                type: data.geometry.type,
+                                coordinates: data.geometry.coordinates,
+                                properties: data.properties,
+                                id: data.id,
+                            }
+                            points.push(obj);
+                            break;
+
+                        case "LineStrings":
+                            var obj = {
+                                type: data.geometry.type,
+                                coordinates: data.geometry.coordinates,
+                                properties: data.properties,
+                                id: data.id,
+                            }
+                            lineStrings.push(obj);
+                            break;
+                    
+                        default:
+                            break;
+                    }
+            }
+
+            /** @function showJSONOutput 
+             * Returns and puts the given JSON response into a modal window
+             * 
+             * @returns {void}
+             */
+            function showJSONOutput(data, target) {
+                // Put beautified json
+                // $(target).text(JSON.stringify(data, null, 4));
+                $("#selectedItemId").text(data.id)
+                $(target).empty().simpleJson({ jsonObject: data });
+            }
+
+            /** @function renderObjects
+             * Renders each stored object into the map
+             * 
+             * @returns {void}
+             */
+            function renderObject() {
+                // Render polygons
+                polygons.forEach(function(polygon) {
+                    // Add to map custom polygons
+                    var pol = L.polygon(polygon.coordinates, {
+                        weight: 1,
+                        fillOpacity: 0.7,
+                        color: 'red',
+                        dashArray: '3'
+                    }).addTo(map);
+                    // Add tooltip to the polygon
+                    var content = '<h4>'+polygon.id+' properties:</h4>';
+                    var counter = 0;
+                    for(var key in polygon.properties) {
+                        if(polygon.properties.hasOwnProperty(key) && counter < 5) {
+                            content += '<p>'+key+':'+polygon.properties[key]+'<p>';
+                            counter++;
+                        }
+                    }
+                    pol.bindTooltip(content).addTo(map);
+                    // Get the polygon center
+                    var center = pol.getCenter();
+                    // Fly to the polygon center
+                    map.flyTo([center.lat, center.lng], 9);
+                });
+                // Render points
+                points.forEach(function(point) {
+                    var pt = L.geoJSON(point, {
+                        pointToLayer: function (feature, latlng) {
+                            // Put the markeron map
+                            L.marker(latlng).addTo(map);
+                            // Show custom points
+                            return L.circleMarker(latlng, {
+                                radius: 8,
+                                fillColor: "#ff7800",
+                                color: "#000",
+                                weight: 1,
+                                opacity: 1,
+                                fillOpacity: 0.8
+                            });
+                        }
+                    }).addTo(map);
+                    // Add tooltip to the point
+                    var content = '<h4>'+point.id+' properties:</h4>';
+                    var counter = 0;
+                    for(var key in point.properties) {
+                        if(point.properties.hasOwnProperty(key) && counter < 5) {
+                            content += '<p>'+key+':'+point.properties[key]+'<p>';
+                            counter++;
+                        }
+                    }
+                    pt.bindTooltip(content).addTo(map);
+                    // Fly to the point center
+                    map.flyTo(pt.getBounds().getCenter(), 9);
+                });
+                // Render lineStrings
+                lineStrings.forEach(function(lineString) {
+                    // TODO: Why do we need to reverse the coordinates array?
+                    // Reverse the corrdinates 
+                    // (FIXME)
+                    var coordinates = [];
+                    lineString.coordinates.forEach(function(coordinatesPair) {
+                        var aux = [coordinatesPair[1], coordinatesPair[0]];
+                        coordinates.push(aux);
+                    });
+                    // (ENDFIXME)
+                    // Add to map custom lineStrings
+                    var ls = L.polyline(coordinates).addTo(map);
+                    // Add tooltip to the polygon
+                    var content = '<h4>'+lineString.id+' properties:</h4>';
+                    var counter = 0;
+                    for(var key in lineString.properties) {
+                        if(lineString.properties.hasOwnProperty(key) && counter < 5) {
+                            content += '<p>'+key+':'+lineString.properties[key]+'<p>';
+                            counter++;
+                        }
+                    }
+                    ls.bindTooltip(content).addTo(map);
+                    // Get the lineString center
+                    var center = ls.getCenter();
+                    // Fly to the lineString center
+                    map.flyTo([center.lat, center.lng], 3);
+                });
+            }
+        </script>
+
+        <!-- Map JS -->
+        <script>
+            // Set map center and block zoom
+            var map = L.map('mapid', {
+                scrollWheelZoom: false,
+            }).setView([41.651454948560136, -0.8817493915557862], 4);
+            // Get map tiles from localhost or OSM
+            // L.tileLayer('http://3.143.92.80/tileserver/{z}/{x}/{y}.png', {
+            var tilesFrom = "{{tileserver}}"
+            L.tileLayer(tilesFrom, {
+                maxZoom: 19,
+                attribution: '&copy; <a href="http://openstreetmap.org/copyright">OpenStreetMap</a> contributors and <a href="https://skymantics.com">Skymantics</a>'
+            }).addTo(map);
+
+            function refreshMap()
+            {
+                map.eachLayer(function(point){
+                    map.remove();
+                    map.removeLayer(point)
+                    latlngs = [];
+                    isMap = false;
+                    loadMap();
+                    points = [];
+                    lineStrings = [];
+                    polygons = [];
+                });
+            }
+
+            function loadMap() {
+                // Set map center and block zoom
+                map = L.map('mapid', {
+                    scrollWheelZoom: false,
+                }).setView([41.651454948560136, -0.8817493915557862], 4);
+                var tilesFrom = "{{tileserver}}"
+                L.tileLayer(tilesFrom, {
+                    maxZoom: 19,
+                    attribution: '&copy; <a href="http://openstreetmap.org/copyright">OpenStreetMap</a> contributors and <a href="https://skymantics.com">Skymantics</a>'
+                }).addTo(map);
+            }
+        </script>
+
+        <!-- Useful links JS -->
+        <script>
+            $('.useful-link').each(function(link) {
+                $( this ).on('click', loadLinkJson);
+            });
+
+            function loadLinkJson(e) {
+                e.preventDefault();
+                var $this = $(this);
+                var loadingText = '<i class="fa fa-circle-o-notch fa-spin"></i> Loading...';
+                if ($(this).html() !== loadingText) {
+                    $this.data('original-text', $(this).html());
+                    $this.html(loadingText);
+                    $this.prop('disabled', true);
+
+                }
+                $.getJSON(this.href, {}, function(data) {
+                    if (data[0] == "error") {
+                        alert(data[1]);
+                        $this.html($this.data('original-text'));
+                        $this.removeAttr('disabled');
+                    } else {
+                        /** @function showJSONOutputAuto */
+                        showJSONOutputAuto(data, "#result-link-items", "#usefulLinksModal");
+                        return data;
+                    }
+                }).done(function (data) {
+                    if (data[0] !== "error") {
+                        $this.html($this.data('original-text'));
+                        $this.removeAttr('disabled');
+                        $('#usefulLinksModalButton').removeAttr('disabled');
+                    }
+                }).fail(function() {
+                    $this.html($this.data('original-text'));
+                    $this.removeAttr('disabled');
+                    alert('Error');
+                });
+            }
+
+            /** @function showJSONOutputAuto 
+             * Returns and puts the given JSON response into a modal window
+             * 
+             * @returns {void}
+             */
+             function showJSONOutputAuto(data, target, modal) {
+                // Put beautified json
+                $(modal).text(data.id)
+                $(target).empty().simpleJson({ jsonObject: data });
+                $(modal).modal()
+            }
+        </script>
+
+        <!-- Get list of features from a selected collection -->
+        <script>
+            function getCollectionItemsListAndPopulateSelect()
+            {
+                refreshMap();
+                var collId = $('select#collectionIdFilter').val(); 
+                if (collId.length == 0) {
+                    $('#collectionIdFilter').addClass('border-danger')
+                    $('#collectionIdFilter').on('change', function(){
+                        $(this).removeClass('border-danger')
+                    });
+                    return false;
+                }
+
+                $.getJSON($SCRIPT_ROOT + '/collections/' +collId+ '/items/', {
+                    collectionId: collId,
+                }, function(data) {
+                    if (data[0] == "error") {
+                        alert(data[1]);
+                    } else {
+                        var select = document.getElementById('elementId');
+                        for (var j = 0; j < data.length; j++) {
+                            var option = document.createElement("option");
+                            option.setAttribute("value", data[j].id);
+                            option.innerHTML = data[j].id + ', Station: ' + data[j].properties.station;
+                            select.appendChild(option);
+                        }
+                        return data;
+                    }
+                }).fail(function() {
+                    alert('Error');
+                });
+            }
+        </script>
+
+        <!-- Get list of collections from a selected group -->
+        <script>
+            function getCollectionListAndPopulateSelect()
+            {
+                refreshMap();
+                var collId = $('select#groupId').val(); 
+                if (collId.length == 0) {
+                    $('#groupId').addClass('border-danger')
+                    $('#groupId').on('change', function(){
+                        $(this).removeClass('border-danger')
+                    });
+                    return false;
+                }
+
+                $.getJSON($SCRIPT_ROOT + '/collections/' +collId+ '/items/', {
+                    collectionId: collId,
+                }, function(data) {
+                    if (data[0] == "error") {
+                        alert(data[1]);
+                    } else {
+                        var select = document.getElementById('elementId');
+                        for (var j = 0; j < data.length; j++) {
+                            var option = document.createElement("option");
+                            option.setAttribute("value", data[j].id);
+                            option.innerHTML = data[j].id + ', Station: ' + data[j].properties.station;
+                            select.appendChild(option);
+                        }
+                        return data;
+                    }
+                }).fail(function() {
+                    alert('Error');
+                });
+            }
+        </script>
+    </body>
+</html>
