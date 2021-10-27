@@ -91,7 +91,7 @@
                                 </div>
                                 <div class="row form-group">
                                     <div class="col-12">
-                                        <label for="collectionId">Group ID*</label>
+                                        <label for="collectionId">Collection ID*</label>
                                         <!-- <input type="text" name="collectionId" required id="collectionId" class="form-control" value="" placeholder="{{default_collection_id}}"> -->
                                         <select name="collectionId" required id="collectionId" class="form-control">
                                         </select>
@@ -281,6 +281,7 @@
             $(function() {
                 // get collection list
                 $('button#getCollectionItems').bind('click', getCollectionItemsList);
+                $('select#groupId').bind('change', getCollectionListAndPopulateSelect);
             });
 
             /** @function getCollectionItemList 
@@ -846,8 +847,8 @@
             function getCollectionListAndPopulateSelect()
             {
                 refreshMap();
-                var collId = $('select#groupId').val(); 
-                if (collId.length == 0) {
+                var groupId = $('select#groupId').val(); 
+                if (groupId.length == 0) {
                     $('#groupId').addClass('border-danger')
                     $('#groupId').on('change', function(){
                         $(this).removeClass('border-danger')
@@ -855,13 +856,13 @@
                     return false;
                 }
 
-                $.getJSON($SCRIPT_ROOT + '/collections/' +collId+ '/items/', {
-                    collectionId: collId,
+                $.getJSON($SCRIPT_ROOT + '/collections/' +groupId+ '/items/', {
+                    collectionId: groupId,
                 }, function(data) {
                     if (data[0] == "error") {
                         alert(data[1]);
                     } else {
-                        var select = document.getElementById('elementId');
+                        var select = document.getElementById('collectionId');
                         for (var j = 0; j < data.length; j++) {
                             var option = document.createElement("option");
                             option.setAttribute("value", data[j].id);
