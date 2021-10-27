@@ -19,6 +19,7 @@ DEFAULT_ELEMENT_ID = "" # I.e.  "CWFID.AEROFACP_1M.5212.5610.7AEB8DB2246327DC1F2
 TILESERVER_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
 GROUPS = get_groups(API_BASE_URL)
 DEFAULT_ZOOM = 12
+DEFAULT_CENTER = [0,0]
 
 @app.route('/')
 def index():
@@ -36,7 +37,8 @@ def index():
         collections = COLLECTIONS_IN_API,
         # queryables = QUERYABLES_IN_API,
         groups = GROUPS,
-        zoom=DEFAULT_ZOOM
+        zoom=DEFAULT_ZOOM,
+        center=DEFAULT_CENTER
     )
 
 @app.route('/collections/<collectionId>/items/', defaults={
