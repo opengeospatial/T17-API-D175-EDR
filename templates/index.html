@@ -246,6 +246,7 @@
             $SCRIPT_ROOT = {{request.root_url|tojson|safe}};
             $COLLECTIONS =  {{collections|tojson|safe}};
             $GROUPS =  {{groups|tojson|safe}};
+            $SCRIPT_ZOOM = {{zoom}};
             var map;
         </script>
 
@@ -716,7 +717,7 @@
             // Set map center and block zoom
             var map = L.map('mapid', {
                 scrollWheelZoom: false,
-            }).setView([41.651454948560136, -0.8817493915557862], 4);
+            }).setView([41.651454948560136, -0.8817493915557862], $SCRIPT_ZOOM);
             // Get map tiles from localhost or OSM
             // L.tileLayer('http://3.143.92.80/tileserver/{z}/{x}/{y}.png', {
             var tilesFrom = "{{tileserver}}"
@@ -743,7 +744,7 @@
                 // Set map center and block zoom
                 map = L.map('mapid', {
                     scrollWheelZoom: false,
-                }).setView([41.651454948560136, -0.8817493915557862], 4);
+                }).setView([41.651454948560136, -0.8817493915557862], $SCRIPT_ZOOM);
                 var tilesFrom = "{{tileserver}}"
                 L.tileLayer(tilesFrom, {
                     maxZoom: 19,
