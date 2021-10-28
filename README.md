@@ -53,11 +53,11 @@ These commands execute the following steps:
 Before running the deployment script, the following requirements need to be met:
 
 1. Operative system: Linux or MacOS with Python 3.
-1. The following installed packages:
+2. The following installed packages:
 * git
 * pip3
 * virtualenv
-1. Access to the Internet.
+3. Access to the Internet.
 
 ## Installation
 
